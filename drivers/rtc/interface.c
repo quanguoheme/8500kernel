@@ -335,19 +335,29 @@ int rtc_update_irq_enable(struct rtc_device *rtc, unsigned int enabled)
 {
 	int err = mutex_lock_interruptible(&rtc->ops_lock);
 	if (err)
-		return err;
-
+		{
+	//		printk("lee kernel err1\n");
+			return err;
+		}
 #ifdef CONFIG_RTC_INTF_DEV_UIE_EMUL
-	if (enabled == 0 && rtc->uie_irq_active) {
+	if ((enabled == 0) && rtc->uie_irq_active) 
+	{	
+//		printk("lee kernel no err\n");
 		mutex_unlock(&rtc->ops_lock);
 		return rtc_dev_update_irq_enable_emul(rtc, enabled);
 	}
 #endif
 
 	if (!rtc->ops)
+	{
+	//	printk("lee kernel err2\n");
 		err = -ENODEV;
+	}
 	else if (!rtc->ops->update_irq_enable)
+	{
+	//	printk("lee kernel err3\n");
 		err = -EINVAL;
+	}
 	else
 		err = rtc->ops->update_irq_enable(rtc->dev.parent, enabled);
 
@@ -361,7 +371,9 @@ int rtc_update_irq_enable(struct rtc_device *rtc, unsigned int enabled)
 	 * interrupts or that are not available at the moment.
 	 */
 	if (err == -EINVAL)
+	{
 		err = rtc_dev_update_irq_enable_emul(rtc, enabled);
+	}
 #endif
 	return err;
 }

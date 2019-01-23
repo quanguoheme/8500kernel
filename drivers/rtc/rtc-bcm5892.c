@@ -52,10 +52,292 @@
 #include <mach/pmb.h>
 #include <mach/platform.h>
 #include <asm/cacheflush.h>
-#include <mach/shm.h>
+#include <mach/shm.h>]
+
+#include <mach/bcm5892_reg.h>
+#include <mach/regaccess.h>
+#include "rtc-bcm5892.h"
+
+//added by lee
+#define BBL_WRITE_INDREG         0x61
+#define BBL_32KHZ_PERIOD         320
+#define BBL_SOFT_RST_BBL         0x81
+#define BBL_READ_INDREG          0x21
+
+#define BBL_RTC_STOP             0x0
+#define BBL_RTC_START            0x1
+
 
 static struct rtc_device *rtc_g;
 static DEFINE_MUTEX(bcm5892_rtc_mutex);
+
+
+/*
+ *added base on stbl by lee 
+ */
+
+//cls_rtc_getper
+//cls_rtc_setper
+//cls_rtc_aie_on_off
+//cls_rtc_getalarm
+
+/*
+ *Periodic int. disable off
+ */
+void cls_rtc_pie_on_off(int *enable)
+{
+	uint32_t addr, val, status;
+
+	if (*enable)
+		val = 1 << BBL1_F_bbl_period_intr_en_R;
+	else
+		val = 0 << BBL1_F_bbl_period_intr_en_R;
+
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+
+	val = (BBL1_R_BBL_INT_EN_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+	do {
+//		status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		status = __raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+}
+
+
+/*
+ * 设置周期波特率
+ */
+
+void cls_rtc_setper(uint32_t *interval)
+{
+	uint32_t val, addr, status;
+	int ien;
+
+	// Disable and clear the periodic interrupt
+	ien = 0;
+	cls_rtc_pie_on_off(&ien);
+	val = BBL1_F_bbl_per_intr_clr_MASK;
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+	val = (BBL1_R_BBL_CLR_INT_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+	do {
+		//status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		  status =__raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+	// set period
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), *interval, AHB_BIT32);
+	__raw_writel(*interval,IO_ADDRESS(addr));
+	// Indirect Reg Write to Register 0 (bbl_per)
+	val = (BBL1_R_BBL_PER_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+	do {
+		//status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		 status = __raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+}
+
+
+/*
+ *Read IRQ rate
+ */
+void cls_rtc_getper(uint32_t *interval)
+{
+	uint32_t val, addr, status;
+
+	// Indirect Reg Write to Register 0 (bbl_per)
+	val = (BBL1_R_BBL_PER_SEL << BBL0_F_indaddr_R) | (BBL_READ_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+	do {
+		//status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		  status =__raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+//	*interval = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+	*interval =__raw_readl(IO_ADDRESS(addr));
+}
+
+
+
+
+
+
+/*
+ *读取RTC定时器时使用
+ *
+ */
+void cls_rtc_getalarm(unsigned long *alarm_secs)
+{
+	uint32_t addr, val, status;
+        //		        100000000                         0x21=100001
+	val = (BBL1_R_BBL_MATCH_SEL << BBL0_F_indaddr_R) | (BBL_READ_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;   //0x1028000
+	__raw_writel(val,IO_ADDRESS(addr));
+
+	do {
+		//status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		  status = __raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;     //0x1028004
+	*alarm_secs = __raw_readl(IO_ADDRESS(addr));
+
+}
+
+/*
+ *设置RTC定时器时使用
+ *
+ */
+
+void cls_rtc_aie_on_off(int *enable)
+{
+	uint32_t val, addr, status;
+	printk("kernel call cls_rtc_aie_on_off\n");
+	if (*enable)
+		val = 1 << BBL1_F_bbl_match_intr_en_R;
+	else
+		val = 0 << BBL1_F_bbl_match_intr_en_R;
+
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+
+	val = (BBL1_R_BBL_INT_EN_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+	do {
+		//status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		  status = __raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+}
+
+
+
+void cls_rtc_setalarm(unsigned long *alarm_secs)
+{
+	uint32_t addr, val, status;
+	int ien;
+	printk("kernel set alarm from stbl\n");
+	// Disable and clear alarm interrupt
+	ien = 0;
+	cls_rtc_aie_on_off(&ien);
+	val = BBL1_F_bbl_per_intr_clr_MASK | BBL1_F_bbl_match_intr_clr_MASK;
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+
+	val = (BBL1_R_BBL_CLR_INT_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+
+	do {
+		//status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		status = __raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+	// set alarm value
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+	//CPU_WRITE_SINGLE(IO_ADDRESS(addr), *alarm_secs, AHB_BIT32);
+	__raw_writel(*alarm_secs,IO_ADDRESS(addr));
+
+	// Indirect Reg Write to bbl_match
+	val = (BBL1_R_BBL_MATCH_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+//	CPU_WRITE_SINGLE(IO_ADDRESS(addr), val, AHB_BIT32);
+	__raw_writel(val,IO_ADDRESS(addr));
+	do {
+	//	status = CPU_READ_SINGLE(IO_ADDRESS(addr), AHB_BIT32);
+		status = __raw_readl(IO_ADDRESS(addr));
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+}
+
+
+/*
+ *设置RTC时钟时使用
+ *
+ */
+void bbl_rtc_control(uint32_t start) {
+  uint32_t val, addr, status;
+
+	// Start/Stop the rtc clock using bbl_rtc_stop
+	if (start) 
+	{
+		val = BBL1_R_BBL_CONTROL_INIT & (~BBL1_F_bbl_rtc_stop_MASK);
+	}
+	else {
+		val = BBL1_R_BBL_CONTROL_INIT | BBL1_F_bbl_rtc_stop_MASK;
+	}
+	addr = BBL0_R_BBL_ACCDATA_MEMADDR;
+	
+	__raw_writel(val,IO_ADDRESS(addr));
+	
+	val = (BBL1_R_BBL_CONTROL_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	
+	addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+
+	__raw_writel(val,IO_ADDRESS(addr));
+	do {
+		  status = __raw_readl(IO_ADDRESS(addr));
+		  
+	   } while ((status & BBL0_F_rdyn_go_MASK));
+#if 0
+	if (start) {
+		printk("Started the rtc clock using bbl_rtc_stop\n");
+	}
+	else {
+		print_log("Stopped the rtc clock using bbl_rtc_stop\n");
+	}
+#endif
+}
+void bbl_set_rtc_secs(uint32_t rtc_secs) 
+{
+  uint32_t val, addr, status;
+
+    // Load the rtc_seconds with an initial value
+    val = rtc_secs;
+    addr = BBL0_R_BBL_ACCDATA_MEMADDR;       //0x1028004 BBL Indirect Data Register
+	__raw_writel(val,IO_ADDRESS(addr));
+  
+    // Indirect Reg Write to Register 2 (rtc_div_match)
+    val = (BBL1_R_BBL_RTC_SECONDS_SEL << BBL0_F_indaddr_R) | (BBL_WRITE_INDREG);
+	
+    addr = BBL0_R_BBL_CMDSTS_MEMADDR;
+	
+   __raw_writel(val,IO_ADDRESS(addr));
+    do {
+     	  status = __raw_readl(IO_ADDRESS(addr));
+		  
+       } while ((status & BBL0_F_rdyn_go_MASK));
+#if 0
+    print_log("STEP 3a. Load the rtc_seconds with an initial value\n");
+#endif
+}
+
+void cls_rtc_settime(uint32_t *secs)
+{
+	bbl_rtc_control(BBL_RTC_STOP);
+	bbl_set_rtc_secs(*secs);
+	bbl_rtc_control(BBL_RTC_START);
+}
 
 /*
  * Read current time and date in RTC
@@ -64,16 +346,13 @@ static int bcm5892_rtc_readtime(struct device *dev, struct rtc_time *tm)
 {
 	unsigned long  rtc_sec;
 
-	rtc_sec = readl( IO_ADDRESS(BBL0_R_BBL_RTC_TIME_MEMADDR) );
+	rtc_sec = readl( IO_ADDRESS(BBL0_R_BBL_RTC_TIME_MEMADDR) );  //0x1028010
 	dev_dbg(dev, "%s rtc_sec:%ld\n", __func__, rtc_sec);
-
 	rtc_time_to_tm(rtc_sec, tm);
-
-	dev_dbg( dev, "%s: read time 0x%02d.0x%02d.0x%02d 0x%02d/0x%02d/0x%02d\n",
+	dev_dbg( dev, "lee %s: read time 0x%02d.0x%02d.0x%02d 0x%02d/0x%02d/0x%02d\n",
 		 __func__,
 		  tm->tm_year, tm->tm_mon, tm->tm_mday, 
 		  tm->tm_hour, tm->tm_min, tm->tm_sec );
-
 	return 0;
 }
 
@@ -96,17 +375,18 @@ static int bcm5892_rtc_settime(struct device *dev, struct rtc_time *tm)
 	dev_dbg(dev, "%s current_sec:%ld\n", __func__, current_sec);
 
 	dmac_flush_range(&current_sec,(&current_sec+4));	
-	ret = call_secure_api(CLS_RTC_SETTIME_ID, 1, virt_to_phys(&current_sec));	
+//	ret = call_secure_api(CLS_RTC_SETTIME_ID, 1, virt_to_phys(&current_sec));	
+	cls_rtc_settime(&current_sec);
 	dmac_flush_range(&current_sec,(&current_sec+4));	
 
 	mutex_unlock(&bcm5892_rtc_mutex);
-
+#if 0
 	if (ret == 1) {
 		dev_dbg(dev, "%s: error accessing secure mode, operation failed\n", 
 			__func__ );
 		return -EIO;
 	}
-	
+#endif
 	return 0;
 }
 
@@ -151,7 +431,8 @@ static int bcm5892_rtc_setfreq(struct device *dev, int freq)
 	}
 
 	dmac_flush_range(&interval,(&interval+4));	
-	ret = call_secure_api(CLS_RTC_SETPER_ID, 1, virt_to_phys(&interval));
+//	ret = call_secure_api(CLS_RTC_SETPER_ID, 1, virt_to_phys(&interval));   //23
+	cls_rtc_setper(&interval);
 	dmac_flush_range(&interval,(&interval+4));	
 
 	if (ret == 1) {
@@ -167,7 +448,8 @@ static int bcm5892_rtc_getfreq( struct device *dev, int *freq )
 	int ret = 0, interval;
 
 	dmac_flush_range(&interval,(&interval+4));	
-	ret= call_secure_api(CLS_RTC_GETPER_ID, 1, virt_to_phys(&interval));
+//	ret= call_secure_api(CLS_RTC_GETPER_ID, 1, virt_to_phys(&interval));  //24
+	cls_rtc_getper(&interval);
 	dmac_flush_range(&interval,(&interval+4));	
 
 	if (ret == 1) {
@@ -215,24 +497,37 @@ static int bcm5892_rtc_getfreq( struct device *dev, int *freq )
 	return ret;
 }
 
+
+
+
+
+
 /*
  * Read alarm time and date in RTC
  */
+unsigned long alarm_sec;
+
 static int bcm5892_rtc_readalarm(struct device *dev, struct rtc_wkalrm *alrm)
 {
 	int ret = 0;
-	unsigned long alarm_sec;
+	//unsigned long alarm_sec;
 
-	dmac_flush_range(&alarm_sec,(&alarm_sec+4));	
-	ret = call_secure_api(CLS_RTC_GETALRM_ID, 1, virt_to_phys(&alarm_sec));
-	dmac_flush_range(&alarm_sec,(&alarm_sec+4));	
+	dmac_flush_range(&alarm_sec,(&alarm_sec+4));
 
+	//ret = call_secure_api(CLS_RTC_GETALRM_ID, 1, virt_to_phys(&alarm_sec));
+
+	cls_rtc_getalarm(&alarm_sec);
+
+
+	
+	dmac_flush_range(&alarm_sec,(&alarm_sec+4));	
+#if 0
 	if (ret == 1) {
 		dev_dbg(dev, "%s: error accessing secure mode, operation failed\n", 
 			__func__ );
 		return -EIO;
 	}
-	
+#endif
 	rtc_time_to_tm(alarm_sec, &alrm->time);
 	
 	return 0;
@@ -271,7 +566,9 @@ static int bcm5892_rtc_setalarm(struct device *dev, struct rtc_wkalrm *alrm)
 
 
 	dmac_flush_range(&alarm_sec,(&alarm_sec+4));	
-	ret = call_secure_api(CLS_RTC_SETALRM_ID, 1, virt_to_phys(&alarm_sec)); 
+	printk("kernel call secure api --->set alarm\n");
+//	ret = call_secure_api(CLS_RTC_SETALRM_ID, 1, virt_to_phys(&alarm_sec)); //20
+	cls_rtc_setalarm(&alarm_sec);
 	dmac_flush_range(&alarm_sec,(&alarm_sec+4));	
 
 	if (ret == 1) {
@@ -305,23 +602,28 @@ static int bcm5892_rtc_ioctl(struct device *dev, unsigned int cmd,
 			mutex_lock(&bcm5892_rtc_mutex);
 
 			dmac_flush_range(&enable,(&enable+4));	
-			ret = call_secure_api(CLS_RTC_AIE_ON_OFF_ID, 1, virt_to_phys(&enable));
+//			printk("======================5=======================\n");
+		//	ret = call_secure_api(CLS_RTC_AIE_ON_OFF_ID, 1, virt_to_phys(&enable));
+			cls_rtc_aie_on_off(&enable);
+//			printk("======================6=======================\n");
 			dmac_flush_range(&enable,(&enable+4));	
 
 			mutex_unlock(&bcm5892_rtc_mutex);
 			if (ret == 1) 
 			{
-			  dev_dbg(dev, "%s: error accessing secure mode, operation failed\n",
-				  __func__ );
+			  dev_dbg(dev, "%s: error accessing secure mode, operation failed\n", __func__ );
 				return -EIO;
 			}
-		break;
+			break;
 		case RTC_PIE_ON:
 			enable = 1;
 		case RTC_PIE_OFF:
 			mutex_lock(&bcm5892_rtc_mutex);
 			dmac_flush_range(&enable,(&enable+4));	
-			ret = call_secure_api(CLS_RTC_PIE_ON_OFF_ID, 1, virt_to_phys(&enable));
+//			printk("=============3===============\n");
+		//	ret = call_secure_api(CLS_RTC_PIE_ON_OFF_ID, 1, virt_to_phys(&enable));  //25
+			cls_rtc_pie_on_off(&enable);
+//			printk("=============4===============\n");
 			dmac_flush_range(&enable,(&enable+4));	
 			mutex_unlock(&bcm5892_rtc_mutex);
 			if (ret == 1) {
@@ -338,12 +640,14 @@ static int bcm5892_rtc_ioctl(struct device *dev, unsigned int cmd,
 		case RTC_IRQP_READ:
 		{
 			int freq = 0;
+	//		printk("========>RTC_IRQP_READ\n");
 			ret = bcm5892_rtc_getfreq(dev, &freq);
 			if(ret == 0)
 				ret = put_user(freq, (unsigned long  *)arg);
 		}
 			break;
 		default:
+		//	printk("lee kernerl don't have common\n");
 			ret = -ENOIOCTLCMD;
 			break;
 		}
@@ -382,10 +686,12 @@ static const struct rtc_class_ops bcm5892_rtc_ops = {
 /*
  * Initialize and install RTC driver
  */
-static int __devinit bcm5892_rtc_probe(struct platform_device *pdev)
+
+
+static int __devinit bcm5892_rtc_probe(struct platform_device *pdev)  
 {
 	struct rtc_device *rtc;
-
+							
 	rtc_g = rtc = bcm5892_rtc_device_register(pdev->name, &pdev->dev, &bcm5892_rtc_ops, THIS_MODULE);
 	if (IS_ERR(rtc)) 
 		return PTR_ERR(rtc);
@@ -446,9 +752,9 @@ uint32_t (*do_rtc_pending)(const uint32_t);  //changed by lee
 
 static int __init bcm5892_rtc_init(void)
 {
-	do_rtc_pending_org=do_rtc_pending;   //changed by lee
-	do_rtc_pending=&do_rtc_pending_imp;  //changed by lee
-	return bcm5892_platform_driver_register(&bcm5892_rtc_driver);  //platform_driver_register(drv) 还是注册在platform平台上
+	do_rtc_pending_org=do_rtc_pending;   
+	do_rtc_pending=&do_rtc_pending_imp;  
+	return bcm5892_platform_driver_register(&bcm5892_rtc_driver);  //驱动属于platform总线
 }
 
 static void __exit bcm5892_rtc_exit(void)

@@ -156,7 +156,7 @@ struct rtc_device *rtc_device_register(const char *name, struct device *dev,
 
 	rtc_dev_prepare(rtc);
 
-	err = device_register(&rtc->dev);  //注册RTC设备
+	err = device_register(&rtc->dev);  //注册RTC"类设备",这个硬件类型,向系统注册
 	if (err)
 		goto exit_kfree;
 
