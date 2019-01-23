@@ -77,6 +77,11 @@
 #include <asm/sections.h>
 #include <asm/cacheflush.h>
 
+//ljj
+#include <mach/bcm5892_reg.h>
+#include <mach/hardware.h>
+//ljj
+
 #ifdef CONFIG_X86_LOCAL_APIC
 #include <asm/smp.h>
 #endif
@@ -514,6 +519,42 @@ static void __init mm_init(void)
 	vmalloc_init();
 }
 
+//ljj
+#define SECURITY_FLAG_OFFSET		(0x5c/4)
+#define BBL_READ_2KRAM			0x11
+int implement_sign_verify = 0;
+EXPORT_SYSMBOL(implement_sign_verify);
+
+static asmlinkage void get_security_flag(void)
+{
+ 	unsigned int val, addr, status;
+	unsigned int  security_flag_addr  = SECURITY_FLAG_OFFSET;
+
+	addr = IO_ADDRESS(BBL0_R_BBL_CMDSTS_MEMADDR);
+
+	do {
+		status = __raw_readl(addr);
+	} while ((status & BBL0_F_rdyn_go_MASK));
+	
+	val = (security_flag_addr << BBL0_F_indaddr_R) | (BBL_READ_2KRAM);	// read comd
+	addr = IO_ADDRESS(BBL0_R_BBL_CMDSTS_MEMADDR);
+	__raw_writel(val,addr);		//start read cmd cycle
+
+	do {
+		status = __raw_readl(addr);
+	} while ((status & BBL0_F_rdyn_go_MASK));
+
+	addr = IO_ADDRESS(BBL0_R_BBL_ACCDATA_MEMADDR);
+	status = __raw_readl(addr);
+
+//	printk("get_security_flag :0x%x\n",status);
+
+	if (status == 0x5a5a5a5a)
+		implement_sign_verify = 0;
+	else
+		implement_sign_verify = 1;
+}
+
 asmlinkage void __init start_kernel(void)
 {
 	char * command_line;
@@ -682,6 +723,8 @@ asmlinkage void __init start_kernel(void)
 	sfi_init_late();
 
 	ftrace_init();
+
+	get_security_flag();  //ljj
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();

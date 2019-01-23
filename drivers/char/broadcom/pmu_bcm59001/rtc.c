@@ -198,7 +198,7 @@ int rtc59001_init( void )
 	   rc = -EFAULT;
 	   goto err_unregister_chrdev;
    }
-   printk(" lee go here to create /dev/rtc file\n");
+   
    rtc_dev = device_create(rtc_class, NULL, MKDEV(BCM_RTC_MAJOR,0),NULL,"rtc");
    if(IS_ERR(rtc_dev)){
 	   printk(KERN_ERR "RTC: Device create failed\n");

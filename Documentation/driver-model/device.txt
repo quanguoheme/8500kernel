@@ -20,7 +20,7 @@ struct device {
         struct bus_type * bus;
         struct driver_dir_entry dir;
 
-		u32		class_num;
+	u32		class_num;
 
         struct device_driver *driver;
         void            *driver_data;

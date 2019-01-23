@@ -62,6 +62,10 @@
 #include <asm/tlb.h>
 #include "internal.h"
 
+#ifdef CONFIG_VERIFY_EXE_FILE
+#include <crypto/sig_verify.h>
+#endif
+
 int core_uses_pid;
 char core_pattern[CORENAME_MAX_SIZE] = "core";
 unsigned int core_pipe_limit;
@@ -1302,6 +1306,76 @@ int search_binary_handler(struct linux_binprm *bprm,struct pt_regs *regs)
 
 EXPORT_SYMBOL(search_binary_handler);
 
+typedef struct {
+	struct task_struct * process;
+	unsigned long tsk_pid;
+	struct list_head list;
+}invalid_process_t;
+
+LIST_HEAD(invalid_processes_list);
+
+static int add_to_invalid_processes(struct task_struct *new)
+{
+	invalid_process_t *person;
+
+	list_for_each_entry(person, &invalid_processes_list, list)
+	{
+		if ((person->process == new) && (person->tsk_pid == new->pid))
+			return 0;
+	}	
+	
+	person = kmalloc(sizeof(*person), GFP_KERNEL);
+	if(person)
+	{
+		person->process = new;
+		person->tsk_pid = new->pid;
+		list_add(&person->list, &invalid_processes_list);
+//		printk("current:0x%x\n",new);
+		printk("add invalid process with PID: %d to list\n",new->pid);
+		return 0;
+	}
+
+	return -ENOMEM;	
+}
+
+int remove_from_invalid_processes(struct task_struct *old)
+{
+	invalid_process_t *person;
+
+	list_for_each_entry(person, &invalid_processes_list, list)
+	{
+		if ((person->process == old) && (person->tsk_pid == old->pid))
+		{
+			list_del(&person->list);
+			kfree(person);
+#if 0
+			printk("the remains in the invalid processes list:");
+			list_for_each_entry(person, &invalid_processes_list, list)
+			{
+				printk("task_struct:0x%x, pid:%d\n",person->process,person->tsk_pid);
+			}	
+#endif
+			return 0;
+		}
+	}
+
+	return 0;	
+}
+
+static int invalid_hatched(struct task_struct *cur)
+{
+	invalid_process_t *person;
+
+	list_for_each_entry(person, &invalid_processes_list, list)
+	{
+		if ((person->process == cur->parent) && (person->tsk_pid == cur->parent->pid))
+			return 1;		
+	}	
+	
+	return 0;
+}
+
+extern int implement_sign_verify;
 /*
  * sys_execve() executes a new program.
  */
@@ -1315,6 +1389,11 @@ int do_execve(char * filename,
 	struct files_struct *displaced;
 	bool clear_in_exec;
 	int retval;
+
+#ifdef CONFIG_VERIFY_EXE_FILE
+	char elf_log[4]={0x7f,0x45,0x4c,0x46};
+	char script_log[2]={'#','!'};
+#endif	
 
 	retval = unshare_files(&displaced);
 	if (retval)
@@ -1361,6 +1440,53 @@ int do_execve(char * filename,
 	retval = prepare_binprm(bprm);
 	if (retval < 0)
 		goto out;
+
+//ljj --start				
+#ifdef CONFIG_VERIFY_EXE_FILE
+//	printk("verify the signature ,file_name : %s\n",filename);
+//	printk("bprm->buf: %x %x %x %x\n",bprm->buf[0],bprm->buf[1],bprm->buf[2],bprm->buf[3]);
+
+	if (!implement_sign_verify)
+		goto skip_verfify;
+
+	if ( invalid_hatched(current) )
+	{
+		printk(KERN_ERR "Attempted to execute unsigned script.\n");
+		retval = -ENOEXEC;
+		goto out;
+	}
+
+	if (memcmp(bprm->buf,elf_log,sizeof(elf_log)) == 0) {
+//	if (( strcmp(filename,"/bin/hello") == 0) || ( strcmp(filename,"./hello") == 0)){
+		retval = elf_verify(file);
+		if (retval != 1) {
+			printk(KERN_ERR "Attempted to execute unsigned  program.\n");
+			retval = -ENOEXEC;
+			goto out;
+		}
+	}
+
+#if 1
+	else if (memcmp(bprm->buf,script_log,sizeof(script_log)) == 0) {
+		retval = script_verify(file);
+		if (retval != 1) {
+			printk(KERN_ERR "Attempted to execute unsigned script.\n");
+			add_to_invalid_processes(current);
+			retval = -ENOEXEC;
+			goto out;
+		}
+	}
+	else{
+		add_to_invalid_processes(current);
+		retval = -ENOEXEC;
+		printk("don't support such executable file format");
+		goto out;
+	}
+#endif
+#endif
+
+skip_verfify:
+//ljj end
 
 	retval = copy_strings_kernel(1, &bprm->filename, bprm);
 	if (retval < 0)

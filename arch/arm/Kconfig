@@ -1055,6 +1055,17 @@ config LOCAL_TIMERS
 
 source kernel/Kconfig.preempt
 
+config VERIFY_EXE_FILE
+	bool "verify the signatue of all executable files (EXPERIMENTAL)"
+	depends on EXPERIMENTAL
+	select CRYPTO
+	select CRYPTO_SHA1
+	select CRYPTO_SIGNATURE	
+	help
+	  select this option if you want to verify the signature of all executable 
+	  files. if you select this option,the only format of executable file will 
+	  limit to elf and shell script. 
+
 config HZ
 	int
 	default 128 if ARCH_L7200

@@ -958,12 +958,12 @@ int __init platform_bus_init(void)
 
 	early_platform_cleanup();
 
-	error = device_register(&platform_bus);    //注册了platform_bus的设备
+	error = device_register(&platform_bus);
 	if (error)
 		return error;
-	error =  bus_register(&platform_bus_type); //注册platform类型的总线
+	error =  bus_register(&platform_bus_type);
 	if (error)
-		device_unregister(&platform_bus);      //注销总线
+		device_unregister(&platform_bus);
 	return error;
 }
 

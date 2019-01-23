@@ -2268,8 +2268,8 @@ endif
 #
 #added by lee
 #
-config FB_S3C2416_EXTERN
-    bool "S3C2416 extern LCD framebuffer support"
+config FB_BCM5892_EXTERN
+    bool "BCM5892 extern LCD framebuffer support"
 	depends on FB&&ARCH_BCM5892
 	default n
 	select FB_CFB_FILLRECT
@@ -2277,19 +2277,19 @@ config FB_S3C2416_EXTERN
 	select FB_CFB_IMAGEBLIT
 
 	---help---
-    Frame buffer driver for the extern LCD controller in the Samsung
-	S3C2416 processor.
+    Frame buffer driver for the extern LCD controller on the broadcom 
+	BCM5892 processor.
 
 config FACTORY_LOGO
     bool "Show logo information during system booting"
-	depends on FB && FB_S3C2416_EXTERN
+	depends on FB && FB_BCM5892_EXTERN
 	default n
 	---help---
 
 config  VTM88560
     bool "LCD module VTM8850 support"
 	default n
-	depends on FB_S3C2416_EXTERN
+	depends on FB_BCM5892_EXTERN
 	---help---
 	LCD module driver for VTM8850
 

@@ -15,7 +15,6 @@ obj-$(CONFIG_VT)		  += console/
 obj-$(CONFIG_LOGO)		  += logo/
 obj-y				  += backlight/ display/
 
-
 obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
 obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
 obj-$(CONFIG_FB_CFB_IMAGEBLIT) += cfbimgblt.o
@@ -95,10 +94,11 @@ obj-$(CONFIG_FB_PVR2)             += pvr2fb.o
 obj-$(CONFIG_FB_VOODOO1)          += sstfb.o
 obj-$(CONFIG_FB_ARMCLCD)	  += amba-clcd.o
 obj-$(CONFIG_FB_BCMRING)     += bcmring_fb.o
+
 # add by lee
-obj-y   		 += s3c2416fb.o
-obj-y            += vtm88560.o
-obj-y    	  	 += logo_font_8x8.o
+obj-$(CONFIG_FB_BCM5892_EXTERN)   += bcm5892fb.o
+obj-$(CONFIG_FACTORY_LOGO)         += vtm88560.o
+obj-$(CONFIG_VTM88560)    	  += logo_font_8x8.o
 
 obj-$(CONFIG_FB_GVR)     += gvr_fb.o
 obj-$(CONFIG_FB_68328)            += 68328fb.o

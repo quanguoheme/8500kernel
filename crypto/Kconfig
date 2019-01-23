@@ -810,6 +810,24 @@ config CRYPTO_ANSI_CPRNG
 	  ANSI X9.31 A.2.4. Not this option must be enabled if CRYPTO_FIPS 
 	  is selected
 
+config CRYPTO_SIGNATURE
+	bool "In-kernel signature checker (EXPERIMENTAL)"
+	depends on CRYPTO
+	help
+	  Signature checker (used for module and executions signature checking).
+
+config CRYPTO_SIGNATURE_RSA
+	bool "Handle RSA signatures (EXPERIMENTAL)"
+	depends on CRYPTO_SIGNATURE
+	help
+	  RSA Signature checker.
+	
+config CRYPTO_MPILIB
+	bool "Multiprecision maths library (EXPERIMENTAL)"
+	depends on CRYPTO
+	help
+	  Multiprecision maths library from GnuPG
+
 source "drivers/crypto/Kconfig"
 
 endif	# if CRYPTO

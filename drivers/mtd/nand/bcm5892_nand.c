@@ -57,25 +57,36 @@ module_param(debug, int, 0644);
 //#define PAGE_ADDRESS(x) (x * (1 <<12))
 #define PDEBUG(fmt, args...) if (debug) printk( KERN_INFO "BCM5892_NAND: " fmt, ## args)
 
+//256M
+#define NAND_SIZE	0x10000000
 
 static struct mtd_partition BCM5892_nand_partition [] = {
-{
-	.name		= "NAND-block1",
-	.size		= 0x1000000,	// 16MB
-	.offset		=  0x0,
-},           
-{
-	.name		= "yaffs2",
-	.size		= 0x2E00000,	// 30MB
-	.offset		=  0x1000000,
-},
-{
-	.name		= "NAND-block2",
-//	.size		= MTDPART_SIZ_FULL,
-//	.offset		= MTDPART_OFS_NXTBLK,
-	.size		= 0x10000000-(0x2E00000+0x1000000),
-	.offset		= (0x2E00000+0x1000000),
-}
+	{
+		.name		= "U-boot",
+		.offset		= 0x80000,
+		.size		= (256*SZ_1K),	// 256K
+	},
+	{
+		.name		= "Kernel",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= 0x200000,	// 2Mbyte
+	},
+	{
+		.name		= "Root",
+		.offset		= MTDPART_OFS_APPEND,
+		.size		= 0x1400000,
+	},
+	{
+                .name		= "User",
+                .offset		= MTDPART_OFS_APPEND,
+                .size		= (NAND_SIZE - 0x80000 - (256*SZ_1K) - 0x200000 - 0x1400000 - (128*SZ_1K)),
+	},
+	{
+                .name		= "BBT",
+                .offset		=  MTDPART_OFS_APPEND,
+                .size		= (128*SZ_1K),
+		.mask_flags	= MTD_WRITEABLE,		/*force read-only*/
+	}
 };
 
 static const char module_id[] = "bcm5892 nand";

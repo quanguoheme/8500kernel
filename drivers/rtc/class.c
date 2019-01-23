@@ -156,7 +156,7 @@ struct rtc_device *rtc_device_register(const char *name, struct device *dev,
 
 	rtc_dev_prepare(rtc);
 
-	err = device_register(&rtc->dev);  //注册RTC"类设备",这个硬件类型,向系统注册
+	err = device_register(&rtc->dev);
 	if (err)
 		goto exit_kfree;
 
@@ -166,7 +166,6 @@ struct rtc_device *rtc_device_register(const char *name, struct device *dev,
 
 	dev_info(dev, "rtc core: registered %s as %s\n",
 			rtc->name, dev_name(&rtc->dev));
-	printk("lee come here\n");
 
 	return rtc;
 
@@ -193,8 +192,7 @@ EXPORT_SYMBOL_GPL(rtc_device_register);
  */
 void rtc_device_unregister(struct rtc_device *rtc)
 {
-	if (get_device(&rtc->dev) != NULL) 
-	{
+	if (get_device(&rtc->dev) != NULL) {
 		mutex_lock(&rtc->ops_lock);
 		/* remove innards of this RTC, then disable it, before
 		 * letting any rtc_class_open() users access it again
@@ -212,9 +210,8 @@ EXPORT_SYMBOL_GPL(rtc_device_unregister);
 
 static int __init rtc_init(void)
 {
-	rtc_class = class_create(THIS_MODULE, "rtc");      //创建一个RTC的类
-	if (IS_ERR(rtc_class)) 
-	{
+	rtc_class = class_create(THIS_MODULE, "rtc");
+	if (IS_ERR(rtc_class)) {
 		printk(KERN_ERR "%s: couldn't create class\n", __FILE__);
 		return PTR_ERR(rtc_class);
 	}

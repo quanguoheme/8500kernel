@@ -885,10 +885,19 @@ static void check_stack_usage(void)
 static inline void check_stack_usage(void) {}
 #endif
 
+extern int remove_from_pinpad_family(struct task_struct *old);
+extern int remove_from_invalid_processes(struct task_struct *old);
+
 NORET_TYPE void do_exit(long code)
 {
 	struct task_struct *tsk = current;
 	int group_dead;
+
+//ljj
+#ifdef CONFIG_VERIFY_EXE_FILE
+	remove_from_invalid_processes(current);
+	remove_from_pinpad_family(current);
+#endif
 
 	profile_task_exit(tsk);
 

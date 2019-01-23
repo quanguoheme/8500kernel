@@ -26,7 +26,7 @@
 #include <asm/io.h>
 //#include <asm/arch/map.h>
 
-#include "s3c2416fb.h"
+#include "bcm5892fb.h"
 #include "vtm88560.h"
 
 #include <mach/reg_gpio.h>

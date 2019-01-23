@@ -143,8 +143,7 @@ rtc_sysfs_show_wakealarm(struct device *dev, struct device_attribute *attr,
 	 * alarms after they trigger, to ensure one-shot semantics.
 	 */
 	retval = rtc_read_alarm(to_rtc_device(dev), &alm);
-	if (retval == 0 && alm.enabled) 
-	{
+	if (retval == 0 && alm.enabled) {
 		rtc_tm_to_time(&alm.time, &alarm);
 		retval = sprintf(buf, "%lu\n", alarm);
 	}

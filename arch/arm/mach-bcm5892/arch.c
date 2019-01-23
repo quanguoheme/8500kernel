@@ -415,36 +415,12 @@ static struct amba_device *amba_devs[] __initdata = {
 	&dma_amba_device
 };
 
+#if 0
 static struct platform_device rtc_dev = {
 	.name		= "bcm5892-rtc",
 	.id		= -1,
 };
-
-//add by lee
-struct platform_device bcm5892_device_printer = {
-	    .name         = "printer",
-		.id       	  = -1,
-};
-
-static u64 s3c_device_lcd_dmamask = 0xffffffffUL;
-struct platform_device s3c_device_lcd = {
-	.name		  = "s3c2416-extern_lcd",								
-	.id		  = -1,
-	.dev              = {
-		.dma_mask		= &s3c_device_lcd_dmamask,
-		.coherent_dma_mask	= 0xffffffffUL
-	}
-};
-
-struct platform_device s3c2416_device_battery = {
-	.name		  = "battery",
-	.id		  = -1,
-//	.num_resources	  = ARRAY_SIZE(s3c2416_battery),
-//	.resource	  = s3c2416_battery,
-};
-
-
-
+#endif
 
 /* d1w interface */
 static void ds1wm_enable(struct platform_device *pdev)
@@ -670,6 +646,51 @@ struct platform_device bcm5892_device_pm_misc = {
 	.resource	  = bcm5892_pm_misc,
 };
 
+#define BCM5892_PA_SAPI 	(BCM5892_PA_PM_MISC + 0x100)
+static struct resource bcm5892_sapi[] = {
+	{
+		.start = BCM5892_PA_SAPI,
+		.end   = BCM5892_PA_SAPI + 0x10,
+		.flags = IORESOURCE_MEM,
+	},
+};
+
+struct platform_device bcm5892_device_sapi = {
+	.name		  = "bcm5892-sapi",
+	.id		  = -1,
+	.num_resources	  = ARRAY_SIZE(bcm5892_sapi),
+	.resource	  = bcm5892_sapi,
+};
+
+static struct platform_device rtc_dev = {
+	.name		= "bcm5892-rtc",
+	.id		= -1,
+};
+
+//add by lee
+struct platform_device bcm5892_device_printer = {
+	.name         	= "printer",
+	.id       	= -1,
+};
+
+static u64 s3c_device_lcd_dmamask = 0xffffffffUL;
+struct platform_device s3c_device_lcd = {
+	.name		  = "s3c2416-extern_lcd",	
+	.id		  = -1,
+	.dev              = {
+		.dma_mask		= &s3c_device_lcd_dmamask,
+		.coherent_dma_mask	= 0xffffffffUL
+	}
+};
+
+struct platform_device s3c2416_device_battery = {
+	.name		  = "battery",
+	.id		  = -1,
+//	.num_resources	  = ARRAY_SIZE(s3c2416_battery),
+//	.resource	  = s3c2416_battery,
+};
+
+
 #define board_bootmemheap_calc_mmdma bcm5892_bootmemheap_calc_mmdma
 static size_t board_bootmemheap_calc_mmdma(void)
 {
@@ -709,13 +730,7 @@ void __init bcm5892_init_machine( void )
 	}
 	platform_device_register(&rtc_dev);
 	platform_device_register(&ds1wm);
-	
-	//add by lee	
-	//×¢²áÉè±¸
-	platform_device_register(&bcm5892_device_printer);
-	platform_device_register(&s3c_device_lcd);  
-	platform_device_register(&s3c2416_device_battery);
-	
+
 	printk(KERN_NOTICE "SDIO0 init\n");
 #if 0
 	cls_dmu_block_enable_rst(DMU_SDM0_PWR_ENABLE);
@@ -736,6 +751,11 @@ void __init bcm5892_init_machine( void )
 	platform_device_register(&sdm1);
 
 	platform_device_register(&bcm5892_device_pm_misc);
+	platform_device_register(&bcm5892_device_sapi);
+
+	platform_device_register(&bcm5892_device_printer);
+	platform_device_register(&s3c_device_lcd);  
+	platform_device_register(&s3c2416_device_battery);
 
 #if 0
 	/* Initialize the PMB for context switching. */

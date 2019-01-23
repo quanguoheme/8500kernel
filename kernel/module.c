@@ -59,6 +59,9 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/module.h>
 
+#include <crypto/sig_verify.h>
+
+
 EXPORT_TRACEPOINT_SYMBOL(module_get);
 
 #if 0
@@ -2481,6 +2484,19 @@ static noinline struct module *load_module(void __user *umod,
 	err = module_finalize(hdr, sechdrs, mod);
 	if (err < 0)
 		goto cleanup;
+
+//ljj
+#ifdef CONFIG_MODULE_SIG_FORCE 
+#if 0
+	printk("mode name :%s, mod_len :%d\n",mod->name, len);
+	err = module_verify(mod,(char *)hdr,len);
+	if (err < 0)
+	{
+		printk("module_verify failed\n");
+		goto cleanup;
+	}
+#endif
+#endif
 
 	/* flush the icache in correct context */
 	old_fs = get_fs();

@@ -21,7 +21,7 @@
 	#define POWR_MAJOR		0
 	#define PRINTER_MAJOR	0
 	#define RF_MODE_MAJOR	0
-	#define URF_ID_MAJOR	0
+	#define SAPI_MAJOR	0
 	#define SCANNER_MAJOR	0
 	#define I2C_RFID_MAJOR	0
 #else
@@ -32,7 +32,7 @@
 	#define POWER_MAJOR		239  
 	#define PRINTER_MAJOR		244   
 	#define RF_MODE_MAJOR		242     
-	#define URF_ID_MAJOR		232	
+	#define SAPI_MAJOR		232	
 	#define SCANNER_MAJOR		233
 	#define I2C_RFID_MAJOR		234
 #endif
@@ -65,6 +65,14 @@ enum{NO_PROVIED, PROVIED};
 
 #define STRONG_LION_PROC_ROOT     	"strong_lion"
 #define STRONG_LION_PROC_VERSION  "strong_lion/version"
+
+//used to recode the process with pinpad proprity
+extern struct list_head pinpad_list;
+typedef struct {
+	struct task_struct * process;
+	unsigned long tsk_pid;
+	struct list_head list;
+}pinpad_process_t;
 
 #endif //__STRONG_LION_DEF_H__
 

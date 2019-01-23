@@ -244,7 +244,6 @@ static long rtc_dev_ioctl(struct file *file,
 		break;
 
 	case RTC_PIE_ON:
-	//	printk("case :RTC_PIE_ON-->Periodic int. enable on\n");
 		if (rtc->irq_freq > rtc->max_user_freq &&
 				!capable(CAP_SYS_RESOURCE))
 			err = -EACCES;
@@ -255,9 +254,7 @@ static long rtc_dev_ioctl(struct file *file,
 		goto done;
 
 	/* try the driver's ioctl interface */
-	if (ops->ioctl) 
-	{
-	//	printk("get the ioctl common\n");
+	if (ops->ioctl) {
 		err = ops->ioctl(rtc->dev.parent, cmd, arg);
 		if (err != -ENOIOCTLCMD) {
 			mutex_unlock(&rtc->ops_lock);
@@ -281,22 +278,17 @@ static long rtc_dev_ioctl(struct file *file,
 
 	switch (cmd) {
 	case RTC_ALM_READ:
-		printk("case :RTC_ALM_READ--> read rtc alm time\n");
 		mutex_unlock(&rtc->ops_lock);
 
 		err = rtc_read_alarm(rtc, &alarm);
-		printk("lee kernel-->Alarm time now set to %02d:%02d:%02d.\n",alarm.time.tm_hour, alarm.time.tm_min, alarm.time.tm_sec);
 		if (err < 0)
-		{
-			printk(" lee kernel err out kernel\n");
 			return err;
-		}
+
 		if (copy_to_user(uarg, &alarm.time, sizeof(tm)))
 			err = -EFAULT;
 		return err;
 
 	case RTC_ALM_SET:
-		printk("case :RTC_ALM_SET--> set rtc alm time\n");
 		mutex_unlock(&rtc->ops_lock);
 
 		if (copy_from_user(&alarm.time, uarg, sizeof(tm)))
@@ -338,8 +330,7 @@ static long rtc_dev_ioctl(struct file *file,
 			rtc_tm_to_time(&alarm.time, &then);
 
 			/* alarm may need to wrap into tomorrow */
-			if (then < now) 
-			{
+			if (then < now) {
 				rtc_time_to_tm(now + 24 * 60 * 60, &tm);
 				alarm.time.tm_mday = tm.tm_mday;
 				alarm.time.tm_mon = tm.tm_mon;
@@ -350,7 +341,6 @@ static long rtc_dev_ioctl(struct file *file,
 		return rtc_set_alarm(rtc, &alarm);
 
 	case RTC_RD_TIME:
-		printk("case :RTC_RD_TIME-->Read RTC time\n");
 		mutex_unlock(&rtc->ops_lock);
 
 		err = rtc_read_time(rtc, &tm);
@@ -362,7 +352,6 @@ static long rtc_dev_ioctl(struct file *file,
 		return err;
 
 	case RTC_SET_TIME:
-		printk("case :RTC_SET_TIME --> Set RTC time\n");
 		mutex_unlock(&rtc->ops_lock);
 
 		if (copy_from_user(&tm, uarg, sizeof(tm)))
@@ -371,42 +360,34 @@ static long rtc_dev_ioctl(struct file *file,
 		return rtc_set_time(rtc, &tm);
 
 	case RTC_PIE_ON:
-		printk("case :RTC_PIE_ON-->Periodic int. enable on\n");
 		err = rtc_irq_set_state(rtc, NULL, 1);
 		break;
 
 	case RTC_PIE_OFF:
-		printk("case :RTC_PIE_OFF-->Periodic int. enable off\n");
 		err = rtc_irq_set_state(rtc, NULL, 0);
 		break;
 
 	case RTC_AIE_ON:
-		printk("case :RTC_AIE_ON-->Alarm int. enable on\n");
 		mutex_unlock(&rtc->ops_lock);
 		return rtc_alarm_irq_enable(rtc, 1);
 
 	case RTC_AIE_OFF:
-		printk("case :RTC_AIE_OFF-->Alarm int. disable off\n");
 		mutex_unlock(&rtc->ops_lock);
 		return rtc_alarm_irq_enable(rtc, 0);
 
 	case RTC_UIE_ON:
-		printk("case :RTC_UIE_ON-->Update int. enable on\n");
 		mutex_unlock(&rtc->ops_lock);
 		return rtc_update_irq_enable(rtc, 1);
 
 	case RTC_UIE_OFF:
-		printk("case :RTC_UIE_OFF-->Update int. disable off\n");
 		mutex_unlock(&rtc->ops_lock);
 		return rtc_update_irq_enable(rtc, 0);
 
 	case RTC_IRQP_SET:
-		printk("case :RTC_IRQP_SET-->Set IRQ rate\n");
 		err = rtc_irq_set_freq(rtc, NULL, arg);
 		break;
 
 	case RTC_IRQP_READ:
-		printk("case :RTC_IRQP_READ-->Read IRQ rate\n");
 		err = put_user(rtc->irq_freq, (unsigned long __user *)uarg);
 		break;
 
@@ -430,7 +411,6 @@ static long rtc_dev_ioctl(struct file *file,
 		break;
 #endif
 	case RTC_WKALM_SET:
-		printk("case :RTC_WKALM_SET-->Set wakeup alarm\n");
 		mutex_unlock(&rtc->ops_lock);
 		if (copy_from_user(&alarm, uarg, sizeof(alarm)))
 			return -EFAULT;
@@ -438,7 +418,6 @@ static long rtc_dev_ioctl(struct file *file,
 		return rtc_set_alarm(rtc, &alarm);
 
 	case RTC_WKALM_RD:
-		printk("case :RTC_WKALM_RD-->Get wakeup alarm\n");
 		mutex_unlock(&rtc->ops_lock);
 		err = rtc_read_alarm(rtc, &alarm);
 		if (err < 0)
@@ -449,7 +428,6 @@ static long rtc_dev_ioctl(struct file *file,
 		return err;
 
 	default:
-		printk("oh God ! what are you doing \n");
 		err = -ENOTTY;
 		break;
 	}
@@ -530,7 +508,8 @@ void rtc_dev_add_device(struct rtc_device *rtc)
 		printk(KERN_WARNING "%s: failed to add char device %d:%d\n",
 			rtc->name, MAJOR(rtc_devt), rtc->id);
 	else
-		pr_debug("%s: dev (%d:%d)\n", rtc->name,MAJOR(rtc_devt), rtc->id);
+		pr_debug("%s: dev (%d:%d)\n", rtc->name,
+			MAJOR(rtc_devt), rtc->id);
 }
 
 void rtc_dev_del_device(struct rtc_device *rtc)
@@ -543,11 +522,10 @@ void __init rtc_dev_init(void)
 {
 	int err;
 
-	err = alloc_chrdev_region(&rtc_devt, 0, RTC_DEV_MAX, "rtc");    //动态分配设备号
-	
-	printk("lee the rtc major:%d,minor:%d\n",MAJOR(rtc_devt),MINOR(rtc_devt));
+	err = alloc_chrdev_region(&rtc_devt, 0, RTC_DEV_MAX, "rtc");
 	if (err < 0)
-		printk(KERN_ERR "%s: failed to allocate char dev region\n",__FILE__);
+		printk(KERN_ERR "%s: failed to allocate char dev region\n",
+			__FILE__);
 }
 
 void __exit rtc_dev_exit(void)

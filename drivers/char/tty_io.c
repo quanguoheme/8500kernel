@@ -869,7 +869,9 @@ EXPORT_SYMBOL(start_tty);
  *		Locks the line discipline internally while needed. Multiple
  *	read calls may be outstanding in parallel.
  */
-
+#ifdef CONFIG_VERIFY_EXE_FILE
+extern int do_pinpad_tty(struct file *file);
+#endif
 static ssize_t tty_read(struct file *file, char __user *buf, size_t count,
 			loff_t *ppos)
 {
@@ -877,6 +879,16 @@ static ssize_t tty_read(struct file *file, char __user *buf, size_t count,
 	struct tty_struct *tty;
 	struct inode *inode;
 	struct tty_ldisc *ld;
+
+	int xx;
+//ljj
+#ifdef CONFIG_VERIFY_EXE_FILE
+	xx = do_pinpad_tty(file);
+	if (xx == 1)
+		return 0;
+	else if (xx==2)
+		return -EIO;
+#endif
 
 	tty = (struct tty_struct *)file->private_data;
 	inode = file->f_path.dentry->d_inode;

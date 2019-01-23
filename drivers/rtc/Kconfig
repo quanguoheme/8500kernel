@@ -833,4 +833,10 @@ config RTC_DRV_BCMRING
        help
 	 Support for the BCMRING Family Onboard Realtime Clock.
 
+config RTC_DRV_BCM5892
+       tristate "BCM5892 RTC support"
+       depends on ARCH_BCM5892
+       help
+	 Support for the BCM5892 Family Onboard Realtime Clock.
+
 endif # RTC_CLASS

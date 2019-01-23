@@ -49,12 +49,30 @@ struct proc_dir_entry *pm_root;
 struct proc_dir_entry *ver_root;
 
 static struct proc_dir_entry *sleep_level;
+static struct proc_dir_entry *security_status;
 
 struct proc_misc_members pms;
 
 int DC_status = NO_PROVIED;
-
 EXPORT_SYMBOL(DC_status);
+
+extern int implement_sign_verify;
+
+static int proc_read_security_status(char *page,char **start,off_t off, 
+			int count,int *eof,void *data)
+{
+	int len;
+
+	if (implement_sign_verify)
+		len = sprintf(page, "%d\n",1);
+	else
+		len = sprintf(page, "%d\n",0);
+	
+	*eof = 1;
+//	*start = page;
+	
+	return len;  
+}
 
 static int proc_read_sleep_level(char *page,char **start,off_t off, 
 			int count,int *eof,void *data)
@@ -195,7 +213,20 @@ static int __init init_stronglion_proc(void)
 	sleep_level->write_proc = &proc_write_sleep_level;
 	pms.sys_sleep_level = 1;
 
+	security_status = create_proc_entry("security_status",0666,stronglion_root);	
+	if (security_status == NULL)	
+	{		
+		ret = -ENOMEM;
+		goto bad_out3;
+	}	
+
+	security_status->data = pm_proc_buf;	
+	security_status->read_proc = &proc_read_security_status;	
+
 	goto out;
+
+bad_out3:
+	remove_proc_entry("sleep_level",stronglion_root);
 
 bad_out2:
 	remove_proc_entry("version",stronglion_root);
@@ -212,6 +243,8 @@ out:
 
 static void __exit cleanup_stronglion_proc(void)
 {
+	remove_proc_entry("security_status",stronglion_root);
+
 	remove_proc_entry("sleep_level",stronglion_root);
 
 	remove_proc_entry("version",stronglion_root);

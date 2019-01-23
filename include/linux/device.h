@@ -382,29 +382,29 @@ struct device {
 	struct device_private	*p;
 
 	struct kobject kobj;
-	const char		*init_name; 	/* initial name of the device */
+	const char		*init_name; /* initial name of the device */
 	struct device_type	*type;
 
-	struct semaphore	sem;		/* semaphore to synchronize calls to
+	struct semaphore	sem;	/* semaphore to synchronize calls to
 					 * its driver.
 					 */
 
-	struct bus_type	*bus;			/* type of bus device is on */
+	struct bus_type	*bus;		/* type of bus device is on */
 	struct device_driver *driver;	/* which driver has allocated this
-					   				device */
-	void		*platform_data;		/* Platform specific data, device
+					   device */
+	void		*platform_data;	/* Platform specific data, device
 					   core doesn't touch it */
 	struct dev_pm_info	power;
 
 #ifdef CONFIG_NUMA
-	int		numa_node;				/* NUMA node this device is close to */
+	int		numa_node;	/* NUMA node this device is close to */
 #endif
-	u64		*dma_mask;				/* dma mask (if dma'able device) */
-	u64		coherent_dma_mask;		/* Like dma_mask, but for
-					     				alloc_coherent mappings as
-					     				not all hardware supports
-					     				64 bit addresses for consistent
-					     				allocations such descriptors. */
+	u64		*dma_mask;	/* dma mask (if dma'able device) */
+	u64		coherent_dma_mask;/* Like dma_mask, but for
+					     alloc_coherent mappings as
+					     not all hardware supports
+					     64 bit addresses for consistent
+					     allocations such descriptors. */
 
 	struct device_dma_parameters *dma_parms;
 

@@ -10,8 +10,5 @@ obj-y   += shm.o
 obj-y   += pl080-dma.o
 obj-y	+= strong_lion_proc.o
 
-#added by lee
-obj-y	+= sleep.o 
-
 EXTRA_CFLAGS += -Iarch/arm/mach-bcm5892/hw_cfg -Ihw_cfg
 

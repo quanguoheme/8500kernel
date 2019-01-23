@@ -19,6 +19,10 @@ else
 obj-y +=	no-block.o
 endif
 
+#ljj start		
+obj-$(CONFIG_VERIFY_EXE_FILE) 	+= sha1.o sig_verify.o
+#ljj end
+
 obj-$(CONFIG_BLK_DEV_INTEGRITY) += bio-integrity.o
 obj-y				+= notify/
 obj-$(CONFIG_EPOLL)		+= eventpoll.o
