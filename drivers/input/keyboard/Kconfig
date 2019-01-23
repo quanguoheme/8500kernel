@@ -368,6 +368,13 @@ config KEYBOARD_BCMRING
 	help
 	  Say Y to enable the BCMRING keypad driver
 
+config KEYBOARD_BCM5892
+	bool "BCM5892 Keypad"
+	depends on ARCH_BCM5892
+	default n
+	help
+	  Say Y to enable the BCM5892 keypad driver
+
 config KEYBOARD_OMAP
 	tristate "TI OMAP keypad support"
 	depends on (ARCH_OMAP1 || ARCH_OMAP2)

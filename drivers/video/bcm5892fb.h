@@ -124,6 +124,8 @@ int s3c2416fb_init(void);
 #define FB_SET_BACKLIGHT	_IOW(S3C2416_FB_MAGIC, 2 , int)   //set the black light
 #define FB_SET_CONTRAST		_IOW(S3C2416_FB_MAGIC, 3 , int)   //set contrast
 
+#define FB_PINPAD_FLUSH		_IOW(S3C2416_FB_MAGIC, 4 , int)   //pinpad flush LCD
+
 
 
 #endif // __S3C2416_FB_H__

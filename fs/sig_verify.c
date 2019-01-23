@@ -222,6 +222,7 @@ int do_pinpad_tty(struct file *file)
 	char *file_name;
 	char *xxx;
 	pinpad_process_t *person;
+	char *tail_start;
 
 	if (!pinpad_lock)
 		return 0;
@@ -236,11 +237,15 @@ int do_pinpad_tty(struct file *file)
 	xxx = strstr(file_name,"/dev/tty");
 	if (!xxx)
 		return 0;
+	
+//	printk("file_name :%s\n",file_name);
 
-	if ((*(xxx+1)==0) || (*(xxx+1)== '0') || (*(xxx+1)== '1') || 
-		(*(xxx+1)=='2') || (*(xxx+1)== '3') || (*(xxx+1)== '4') || 
-		(*(xxx+1)=='5') || (*(xxx+1)== '6') || (*(xxx+1)== '7') || 
-		(*(xxx+1)=='8') || (*(xxx+1)== '9'))
+	tail_start = xxx + strlen("/dev/tty");
+
+	if ((*(tail_start+1)==0) || (*(tail_start+1)== '0') || (*(tail_start+1)== '1') || 
+		(*(tail_start+1)=='2') || (*(tail_start+1)== '3') || (*(tail_start+1)== '4') || 
+		(*(tail_start+1)=='5') || (*(tail_start+1)== '6') || (*(tail_start+1)== '7') || 
+		(*(tail_start+1)=='8') || (*(tail_start+1)== '9'))
 	{
 		//pinpad family process
 		list_for_each_entry(person, &pinpad_list, list)
@@ -275,7 +280,7 @@ static int add_to_pinpad_family(struct task_struct *new)
 		person->tsk_pid = new->pid;
 		list_add(&person->list, &pinpad_list);
 //		printk("current:0x%x\n",new);
-		printk("add process with PID: %d to pipad family\n",new->pid);
+		printk("add process with PID: %d to pipad family \n",new->pid);
 		return 0;
 	}
 
@@ -868,68 +873,4 @@ int elf_verify(struct file *file)
 int script_verify(struct file *file)
 {
 	return (exec_verify_signature(file));
-}
-
-char mod_dir_path[] = "/usr/lib/modules/2.6.32.9/";
-int module_verify(struct module *mod, char *mod_buf, int mod_len)
-{
-	int i, len;
-	int ret = -1;
-	const char *sig;
-	struct sig_entry *s_entry;
-	char *file_name;
-	unsigned char digest[30];
-//	unsigned char cur_digest[30];
-	sha1 base;
-		
-	file_name = (char *) __get_free_page(GFP_KERNEL);
-	if (!file_name)
-		return -1;
-
-	sprintf(file_name,"%s%s.ko",mod_dir_path,mod->name);
-//	printk("full path of the module should be :%s\n",file_name);
-	if ( (s_entry = get_sig_entry_from_file(file_name)) == NULL )
-	{
-	//	printk("can't find the vaild signature for file: %s\n",file_name);
-		goto out0;
-	}
-
-//	len = s_entry->sig_size;
-//	sig = s_entry->signature;
-
-	len = 128;
-	sig = s_entry->signature;
-
-	sha1_start(&base);
-	if (digest_update(&base,digest,file_name) < 0)
-	{
-		ret = -1;
-		goto out1;
-	}
-
-#if 0
-	sha1_start(&base);
-	sha1_end(&base, mod_buf, mod_len, cur_digest);
-
-	if (memcmp(digest, cur_digest, 20) != 0)
-	{
-		printk("invalid module!\n");
-		ret = -1;
-		goto out1;
-	}
-#endif
-
-	/* do the actual signature verification */
-	i = RAS_verify_signature(sig,len,digest);
-	if ((i == 0) || ( i == 1) || ( i == 2))   //pinpad ,system commond and normal applications
-	{
-		ret = 1;
-	}
-
-out1:
-	put_sig_entry(s_entry);
-out0:
-	free_page((unsigned long)file_name);
-	
-	return ret;
 }

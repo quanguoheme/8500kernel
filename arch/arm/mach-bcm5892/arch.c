@@ -62,10 +62,17 @@ HW_DECLARE_SPINLOCK(Gpio)
                           .length = (sz), \
                           .type = MT_DEVICE }
 
+#define MEM_DESC(pa, sz) { .virtual = IO_ADDRESS(pa), \
+                          .pfn = __phys_to_pfn(pa), \
+                          .length = (sz), \
+                          .type = MT_MEMORY }
+
 
 /* Virtual mapping for devices */
 static struct map_desc bcm5892_io_desc[] __initdata = {
 	IO_DESC(PMB_REG_BASE_ADDR,SZ_4K),
+	IO_DESC(DDR_REG_BASE_ADDR,SZ_4K),             	//ljj
+	MEM_DESC(0x100000,SZ_1M),            		//ljj
 	IO_DESC(SMU_REG_BASE_ADDR,SZ_16M),
 	IO_DESC(PKA_REG_BASE_ADDR,SZ_4K),
 	IO_DESC(RNG_REG_BASE_ADDR,SZ_4K),
@@ -124,7 +131,7 @@ static struct map_desc bcm5892_io_desc[] __initdata = {
 	IO_DESC(GIO4_REG_BASE_ADDR ,SZ_4K),
 	IO_DESC(SMC_REG_BASE_ADDR,SZ_4K),
 	IO_DESC(MMI_REG_BASE_ADDR,SZ_4K),
-	IO_DESC(START_SCRATCH+0x3b000,SZ_16K), /* map scratch mem used by TDM3 as IO, for now */
+//	IO_DESC(START_SCRATCH+0x3b000,SZ_16K), /* map scratch mem used by TDM3 as IO, for now */
 };
 
 

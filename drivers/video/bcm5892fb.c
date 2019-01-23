@@ -357,9 +357,12 @@ static DEVICE_ATTR(debug, 0666,
 		   
 //static unsigned long backlight_status = BACKLIGHT_OFF;
 
+#ifdef CONFIG_VERIFY_EXE_FILE
+extern int is_pinpad_proc(struct task_struct *the_proc);
+#endif
+
 static int s3c2416fb_ioctl(struct fb_info *info, unsigned int cmd,unsigned long arg)
 {
- //     printk("fb ctl\n");
       struct s3c2416fb_info *fbi = info->par;
 
       del_timer_sync(&fbi->timer.fb_timer);
@@ -381,11 +384,23 @@ static int s3c2416fb_ioctl(struct fb_info *info, unsigned int cmd,unsigned long 
 	   case FB_GET_SATAUS:
 	        if (current_lcd.lcd_driver->get_status)
 		    current_lcd.lcd_driver->get_status(info);
+          	break;		
+
+#ifdef CONFIG_VERIFY_EXE_FILE
+	   case FB_PINPAD_FLUSH:
+	   	if (is_pinpad_proc(current))
+	   	{
+      	       		if (current_lcd.lcd_driver->flush_fb)	
+            	   	 	current_lcd.lcd_driver->flush_fb(info,0);		
+	   	}	   
+	   	break;
+#endif		
 			
 	    default:
 	        printk("s3c2416fb:no such command\n");
 	        break;
       }
+	  
       fb_init_timer(fbi);              //for next review
       
       return 0;
@@ -514,13 +529,15 @@ static inline void s3c2416fb_unmap_video_memory(struct s3c2416fb_info *fbi)
 	dma_free_writecombine(fbi->dev,fbi->map_size,fbi->map_cpu, fbi->map_dma);
 }
 
-
 static void s3c2416_flush_fb(struct s3c2416fb_info *fbi)
 {   
       struct fb_info	   *fbinfo = fbi->fb; 
 
-	if ((pinpad_lock) && !pinpad_flush_lcd)	//if LCD is locked by pinpad,don't flush it automatically
+#ifdef CONFIG_VERIFY_EXE_FILE
+//	if ((pinpad_lock) && !pinpad_flush_lcd)	//if LCD is locked by pinpad,don't flush it automatically
+	if (pinpad_lock)
 		goto out;
+#endif
 		  
       //no pixel change since last scan 
       if (memcmp(fbi->lcd_buffer, fbi->last_lcd_buffer,fbi->map_size) == 0 )  
@@ -530,7 +547,7 @@ static void s3c2416_flush_fb(struct s3c2416fb_info *fbi)
       if (current_lcd.lcd_driver->flush_fb)	
             current_lcd.lcd_driver->flush_fb(fbinfo,0);
 
-	  pinpad_flush_lcd = 0;
+//	  pinpad_flush_lcd = 0;
 	
 out:
       fb_init_timer(fbi);              //for next review
@@ -568,10 +585,9 @@ static void s3c2416fb_write_palette(struct s3c2416fbfb_info *fbi)
 #ifdef CONFIG_FACTORY_LOGO
 static char logo_info[20]="waiting...";
 
-
 #if 1
-const unsigned char SINOLogo[16*48] = {
-#include "sino_logo.h"
+const unsigned char SclLogo[16*64] = {
+#include "scl_logo.h"
 }; 
 #endif
 
@@ -666,7 +682,7 @@ static void show_strong_lion_logo(struct s3c2416fb_info *fbi)
 		for(k=0;k<16;k++)
 		{
 	           	cstart =lstart + k;
-			*cstart =  *(char *)(SINOLogo+j*16+k);
+			*cstart =  *(char *)(SclLogo+j*16+k);
 		}
 	}
 }
@@ -712,7 +728,7 @@ static void welcome(struct s3c2416fb_info *fbi)
 //		backlight_status = BACKLIGHT_ON; 
 	}	
 		
-//	show_strong_lion_logo(fbi);
+	show_strong_lion_logo(fbi);
 	show_info(fbi);
 	show_process_bar(fbi);
 	
@@ -884,9 +900,6 @@ go_on:
 	dprintk("got video memory\n");
 	
 	ret = s3c2416fb_check_var(&fbinfo->var, fbinfo);
-	printk("will register frambuffer--------->\n");
-	printk("will register frambuffer--------->\n");
-	printk("will register frambuffer--------->\n");
 	ret = register_framebuffer(fbinfo);
 	
 	if (ret < 0) {
@@ -1025,7 +1038,7 @@ static struct platform_driver s3c2416fb_driver = {
 
 int __devinit s3c2416fb_init(void)
 {
-	printk("========================>2416<=====================\n");
+	printk("=======================>2416<=====================\n");
 	return platform_driver_register(&s3c2416fb_driver);
 }
 

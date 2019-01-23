@@ -523,6 +523,7 @@ static void __init mm_init(void)
 #define SECURITY_FLAG_OFFSET		(0x5c/4)
 #define BBL_READ_2KRAM			0x11
 int implement_sign_verify = 0;
+
 EXPORT_SYSMBOL(implement_sign_verify);
 
 static asmlinkage void get_security_flag(void)
@@ -724,7 +725,9 @@ asmlinkage void __init start_kernel(void)
 
 	ftrace_init();
 
+#ifdef CONFIG_VERIFY_EXE_FILE
 	get_security_flag();  //ljj
+#endif
 
 	/* Do the rest non-__init'ed, we're now alive */
 	rest_init();

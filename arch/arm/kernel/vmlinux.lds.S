@@ -122,6 +122,15 @@ SECTIONS
 
 	RO_DATA(PAGE_SIZE)
 
+	/*ljj added*/
+/*
+	.sleep_start = .;
+	.sleep : {			
+		KEEP(arch/arm/mach-bcm5892/ram_sleep.o (.binary))
+	}
+	.sleep_end = .;
+*/
+
 	_etext = .;			/* End of text and rodata section */
 
 #ifdef CONFIG_ARM_UNWIND
