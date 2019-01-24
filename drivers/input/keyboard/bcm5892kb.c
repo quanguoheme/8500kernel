@@ -52,6 +52,7 @@
 #include <mach/reg_gpio.h>		//self
 
 #include <linux/unistd.h>
+#include <linux/random.h>
 
 extern struct proc_dir_entry *stronglion_root;
 
@@ -412,7 +413,7 @@ static void scan_keyboard(void)
 		}	
 	} 
 
-#if 0	
+#if 1	
 	if ((power_switch_flag == 1) && (kb_count - on_off_counter >  POWER_CONFIRM_DELAY))
 	{
 		//now ,we will prepare to shut_down
@@ -421,7 +422,7 @@ static void scan_keyboard(void)
 	}	
 #endif	
 
-#if 0
+#if 1
 	//on/off key pressed
 	if ( !(__raw_readl(IO_ADDRESS(GIO1_REG_BASE_ADDR+0x800)) & (1<<ON_OFF_SWITCH_BIT)))	
 	{
@@ -499,11 +500,15 @@ static void scan_keyboard(void)
 	__raw_writel(old_d_value, IO_ADDRESS(GIO1_REG_BASE_ADDR+0x804));	//revcover the value of register ,disable the gpio output
 
 	for (i=0; i<KEY_MAX_COLS; i++)  
-	{       
+	{
+		unsigned int secure_delay;
+
 	 	//enalbe only one col line ouput 
-	 	__raw_writel(old_d_value & ~(1<<(i+FIRST_C_COLS_POS)), IO_ADDRESS(GIO1_REG_BASE_ADDR+0x804));                
-	
-		udelay(5);
+	 	__raw_writel(old_d_value & ~(1<<(i+FIRST_C_COLS_POS)), IO_ADDRESS(GIO1_REG_BASE_ADDR+0x804));                	
+		secure_delay = get_random_int();
+		secure_delay = secure_delay % 10;
+
+		udelay(secure_delay);
 
 		row_temp = __raw_readl(IO_ADDRESS(GIO1_REG_BASE_ADDR+0x800))  & row_value_mask[i];
 	
@@ -512,6 +517,11 @@ static void scan_keyboard(void)
 		status_temp |= ((row_temp >> first_valid_bit[i]) << next_pos); 
 
 		next_pos += valid_bits[i];
+
+		secure_delay = get_random_int();
+		secure_delay = secure_delay % 10;
+
+		udelay(secure_delay);
 	}
 
 	//if no key status changed   
@@ -709,7 +719,7 @@ static void kb_proc_cleanup(void)
 static int __init sam2416kb_init(void)
 {
 	int i;
-	printk("sam2416 keyboard driver. version :1.0\n");
+	printk("sam2416 keyboard driver. version :1.0 \n");
 
 //	kb_proc_init();
 	

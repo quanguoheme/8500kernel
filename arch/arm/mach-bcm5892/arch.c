@@ -65,7 +65,7 @@ HW_DECLARE_SPINLOCK(Gpio)
 #define MEM_DESC(pa, sz) { .virtual = IO_ADDRESS(pa), \
                           .pfn = __phys_to_pfn(pa), \
                           .length = (sz), \
-                          .type = MT_MEMORY }
+                          .type = MT_MEMORY_NONCACHED }
 
 
 /* Virtual mapping for devices */
@@ -669,6 +669,38 @@ struct platform_device bcm5892_device_sapi = {
 	.resource	  = bcm5892_sapi,
 };
 
+#define BCM5892_PA_IC_CARD (BCM5892_PA_SAPI + 0x100)
+static struct resource bcm5892_ic_card[] = {
+	{
+		.start = BCM5892_PA_IC_CARD,
+		.end   = BCM5892_PA_IC_CARD + 0x10,
+		.flags = IORESOURCE_MEM,
+	},
+};
+
+struct platform_device bcm5892_device_ic_card = {
+	.name		  = "IC-card",
+	.id		  = -1,
+	.num_resources	  = ARRAY_SIZE(bcm5892_ic_card),
+	.resource	  = bcm5892_ic_card,
+};
+
+#define BCM5892_PA_MSR_CARD (BCM5892_PA_IC_CARD + 0x100)
+static struct resource bcm5892_mcr[] = {
+	{
+		.start = BCM5892_PA_MSR_CARD,
+		.end   = BCM5892_PA_MSR_CARD + 0x10,
+		.flags = IORESOURCE_MEM,
+	},
+};
+
+struct platform_device bcm5892_device_mcr = {
+	.name		  = "mcr",
+	.id		  = -1,
+	.num_resources	  = ARRAY_SIZE(bcm5892_mcr),
+	.resource	  = bcm5892_mcr,
+};
+
 static struct platform_device rtc_dev = {
 	.name		= "bcm5892-rtc",
 	.id		= -1,
@@ -761,8 +793,11 @@ void __init bcm5892_init_machine( void )
 	platform_device_register(&bcm5892_device_sapi);
 
 	platform_device_register(&bcm5892_device_printer);
-	platform_device_register(&s3c_device_lcd);  
+	platform_device_register(&s3c_device_lcd);
 	platform_device_register(&s3c2416_device_battery);
+
+	platform_device_register(&bcm5892_device_ic_card);
+	platform_device_register(&bcm5892_device_mcr);
 
 #if 0
 	/* Initialize the PMB for context switching. */
