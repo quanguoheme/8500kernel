@@ -57,8 +57,8 @@ module_param(debug, int, 0644);
 //#define PAGE_ADDRESS(x) (x * (1 <<12))
 #define PDEBUG(fmt, args...) if (debug) printk( KERN_INFO "BCM5892_NAND: " fmt, ## args)
 
-//128M
-#define NAND_SIZE	0x8000000
+//256M
+#define NAND_SIZE	0x10000000
 
 static struct mtd_partition BCM5892_nand_partition [] = {
 	{

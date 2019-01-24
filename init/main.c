@@ -786,11 +786,11 @@ int do_one_initcall(initcall_t fn)
 		preempt_count() = count;
 	}
 	if (irqs_disabled()) {
-		strlcat(msgbuf, "disabled interrupts", sizeof(msgbuf));
+		strlcat(msgbuf, "disabled interrupts ", sizeof(msgbuf));
 		local_irq_enable();
 	}
 	if (msgbuf[0]) {
-		printk("initcall %pF returned  with %s\n", fn, msgbuf);
+		printk("initcall %pF returned with %s\n", fn, msgbuf);
 	}
 
 	return ret.result;

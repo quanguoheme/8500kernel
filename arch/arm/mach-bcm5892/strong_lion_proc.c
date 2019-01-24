@@ -36,8 +36,6 @@
 
 #include <asm/uaccess.h>
 #include <asm/io.h>
-#include <mach/reg_gpio.h>
-#include <mach/hardware.h>
 
 #include <linux/strong_lion_def.h> 
 
@@ -52,9 +50,6 @@ struct proc_dir_entry *ver_root;
 
 static struct proc_dir_entry *sleep_level;
 static struct proc_dir_entry *security_status;
-static struct proc_dir_entry *usb;
-static struct proc_dir_entry *v50;
-static struct proc_dir_entry *otg_en;
 
 struct proc_misc_members pms;
 
@@ -122,160 +117,10 @@ static int proc_write_sleep_level(struct file *file,const char *buffer, unsigned
     	return count;
 }
 
-static int proc_read_pm_usb(char *page,char **start,off_t off, 
-			int count,int *eof,void *data)
-{
-	int len;
-
-	len = sprintf(page, "%d\n",pms.usb);
-	
-	*eof = 1;
-//	*start = page;
-	
-	return len;  
-}
-
-static int proc_write_pm_usb(struct file *file,const char *buffer, unsigned long count, void *data)
-{
-	if (count > 1)
-		return -EINVAL;
-
-	if(copy_from_user(usb->data,buffer,count))
-		return -EFAULT;
-	
-	if ( memcmp(usb->data,"0",count) == 0 )
-	{
-		if (pms.usb == POWER_ENABLE)
-		{
-			pms.usb = POWER_DISENABLE;
-			reg_gpio_set_pin( BCM5892_GPE1, 0);	   /* output 0 */  //USB power disable 
-		}
-	}	
-	else if ( memcmp(usb->data,"1",count) == 0  )
-	{
-		if (pms.usb == POWER_DISENABLE)
-		{
-			pms.usb = POWER_ENABLE;
-			reg_gpio_set_pin( BCM5892_GPE1, 1);  /* output 1 */  //USB power enable 
-		}
-	}	
-	else
-	{
-		printk("invalid value of usb pm\n");
-		return -EINVAL;
-	}	
-    
-    	return count;
-}
-
-static int proc_read_pm_v50(char *page,char **start,off_t off, 
-			int count,int *eof,void *data)
-{
-	int len;
-
-	len = sprintf(page, "%d\n",pms.V50);
-	
-	*eof = 1;
-//	*start = page;
-	
-	return len;  
-}
-
-static int proc_write_pm_v50(struct file *file,const char *buffer, unsigned long count, void *data)
-{
-	if (count > 1)
-		return -EINVAL;
-
-	if(copy_from_user(v50->data,buffer,count))
-		return -EFAULT;
-	
-	if ( memcmp(v50->data,"0",count) == 0 )
-	{
-		if (pms.V50 == POWER_ENABLE)
-		{
-			pms.V50= POWER_DISENABLE;
-			reg_gpio_set_pin( BCM5892_GPB31, 0);	;  /* output 0 */  //V50 disable 	
-		}
-	}	
-	else if ( memcmp(v50->data,"1",count) == 0  )
-	{
-		if (pms.V50 == POWER_DISENABLE)
-		{
-			pms.V50 = POWER_ENABLE;
-			reg_gpio_set_pin( BCM5892_GPB31, 1);	;  /* output 1 */  //V50 enable 	
-		}
-	}	
-	else
-	{
-		printk("invalid value of V50 pm\n");
-		return -EINVAL;
-	}	
-    
-    	return count;
-}
-
-static int proc_read_otg_en(char *page,char **start,off_t off, 
-			int count,int *eof,void *data)
-{
-	int len;
-
-	len = sprintf(page, "%d\n",pms.otg_en);
-	
-	*eof = 1;
-//	*start = page;
-	
-	return len;  
-}
-
-static int proc_write_otg_en(struct file *file,const char *buffer, unsigned long count, void *data)
-{
-	if (count > 1)
-		return -EINVAL;
-
-	if(copy_from_user(otg_en->data,buffer,count))
-		return -EFAULT;
-	
-	if ( memcmp(otg_en->data,"0",count) == 0 )
-	{
-		if (pms.otg_en == 1)
-		{
-			pms.otg_en= 0;
-			reg_gpio_set_pin( BCM5892_GPA9, 0);	;  /* output 0 */  //otg disable 	
-		}
-	}	
-	else if ( memcmp(otg_en->data,"1",count) == 0  )
-	{
-		if (pms.otg_en == 0)
-		{
-			pms.otg_en = 1;
-			reg_gpio_set_pin( BCM5892_GPA9, 1);	;  /* output 1 */  //V50 enable 	
-		}
-	}	
-	else
-	{
-		printk("invalid value of otg_en \n");
-		return -EINVAL;
-	}	
-    
-    	return count;
-}
 
 static void hareware_init(void)
 {
-	//USB power ,defaultly ,Disable
-	reg_gpio_set_pull_up_down_disable(BCM5892_GPE1); 									/* pull-up/down disable */
-	reg_gpio_iotr_set_pin_type(BCM5892_GPE1,GPIO_PIN_TYPE_OUTPUT); 					//output
-	reg_gpio_set_pin( BCM5892_GPE1, 0);	
 
-	// VCC50,dafault,Disable
-	reg_gpio_set_pull_up_down_disable(BCM5892_GPB31); 					/* pull-up/down disable */
-	reg_gpio_iotr_set_pin_type(BCM5892_GPB31,GPIO_PIN_TYPE_OUTPUT); 		//output	
-	reg_gpio_set_pin( BCM5892_GPB31, 0);	
-
-	// OTG-En,dafault,Disable
-	reg_gpio_set_pull_up_down_disable(BCM5892_GPA9); 					/* pull-up/down disable */
-	reg_gpio_iotr_set_pin_type(BCM5892_GPA9,GPIO_PIN_TYPE_OUTPUT); 		//output	
-	reg_gpio_set_pin( BCM5892_GPA9, 0);		
 }
 
 static void wakeup_hareware_init(void)
@@ -341,6 +186,7 @@ static int __init init_stronglion_proc(void)
 		goto out;
 	} 
 
+
 	pm_root = proc_mkdir("power_manager",stronglion_root);
 	if (pm_root == NULL)
 	{
@@ -377,52 +223,7 @@ static int __init init_stronglion_proc(void)
 	security_status->data = pm_proc_buf;	
 	security_status->read_proc = &proc_read_security_status;	
 
-	usb = create_proc_entry("usb",0666,pm_root);	
-	if (usb == NULL)	
-	{		
-		ret = -ENOMEM;
-		goto bad_out4;
-		
-	}	
-
-	usb->data = pm_proc_buf;	
-	usb->read_proc = &proc_read_pm_usb;	
-	usb->write_proc = &proc_write_pm_usb;	
-
-	v50 = create_proc_entry("V50",0666,pm_root);	
-	if (v50 == NULL)	
-	{		
-		ret = -ENOMEM;
-		goto bad_out5;
-		
-	}	
-
-	v50->data = pm_proc_buf;	
-	v50->read_proc = &proc_read_pm_v50;	
-	v50->write_proc = &proc_write_pm_v50;		
-
-	otg_en= create_proc_entry("otg_en",0666,stronglion_root);	
-	if (otg_en == NULL)	
-	{		
-		ret = -ENOMEM;
-		goto bad_out6;
-		
-	}	
-
-	otg_en->data = pm_proc_buf;	
-	otg_en->read_proc = &proc_read_otg_en;	
-	otg_en->write_proc = &proc_write_otg_en;	
-
 	goto out;
-
-bad_out6:
-	remove_proc_entry("V50",pm_root);
-
-bad_out5:
-	remove_proc_entry("usb",pm_root);
-
-bad_out4:
-	remove_proc_entry("security_status",stronglion_root);
 
 bad_out3:
 	remove_proc_entry("sleep_level",stronglion_root);
@@ -442,12 +243,6 @@ out:
 
 static void __exit cleanup_stronglion_proc(void)
 {
-	remove_proc_entry("otg_en",stronglion_root);
-
-	remove_proc_entry("V50",pm_root);
-
-	remove_proc_entry("usb",pm_root);
-
 	remove_proc_entry("security_status",stronglion_root);
 
 	remove_proc_entry("sleep_level",stronglion_root);

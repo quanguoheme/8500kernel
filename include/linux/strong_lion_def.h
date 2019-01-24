@@ -54,20 +54,8 @@ struct proc_misc_members{
  	 level 2 means all the device can go to sleep 
 	*/
 	char sys_sleep_level; 		/*1,2*/
-
-	/*usb power control*/ 
-	char usb;					/*POWER_DISENABLE,POWER_ENABLE*/	
-
-	/*Vcc 5v enable*/
-	char V50;					/*POWER_DISENABLE,POWER_ENABLE*/	
-
-	/*otg en*/
-	char otg_en;					/*DISENABLE,ENABLE*/	
 	
 };
-
-#define POWER_ENABLE		1
-#define POWER_DISENABLE	0
 
 extern struct proc_misc_members pms;
 

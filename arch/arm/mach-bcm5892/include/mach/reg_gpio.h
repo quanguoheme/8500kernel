@@ -224,7 +224,7 @@ typedef enum /* It's ok to have defines have same value */
 /*
 ** End of public API
 --------------------------------------------------------------------------*/
-//ï¿½Ä´ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ lee
+//¼Ä´æÆ÷Æ«ÒÆ lee
 /* Register offsets */
 #define REGOFFSET_GPIO_IOTR         0x000 /* GPIO Data in register */
 #define REGOFFSET_GPIO_DOUT         0x004 /* GPIO Data out register */
@@ -239,13 +239,13 @@ typedef enum /* It's ok to have defines have same value */
 #define REGOFFSET_GPIO_AUX_SEL      0x028 /* GPIO Auxiliary interface select register */
 #define REGOFFSET_GPIO_SCR          0x02C /* GPIO security control register */
 #define REGOFFSET_GPIO_INIT_VAL     0x030 /* GPIO Initial value register (unused) */
-#define REGOFFSET_GPIO_PAD_RES      0x034 /* GPIO IO Programmable resistor direction */  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-#define REGOFFSET_GPIO_RES_EN       0x038 /* GPIO IO Programmable resister enable */  	 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+#define REGOFFSET_GPIO_PAD_RES      0x034 /* GPIO IO Programmable resistor direction */  //ÉèÖÃÉÏÀ­ÏÂÀ­
+#define REGOFFSET_GPIO_RES_EN       0x038 /* GPIO IO Programmable resister enable */  	 //ÉÏÀ­ÏÂÀ­µç×èÊ¹ÄÜ
 #define REGOFFSET_GPIO_TestInput    0x03C /* 28 Bit word sent to the GPIN[$CELL:0] bus */
 #define REGOFFSET_GPIO_TestOutput   0x040 /* 28 Bit word from the GPOUT[$CELL:0] bus */
 #define REGOFFSET_GPIO_TestEnable   0x044 /* 28 bit enable signal to drive GP_TestInput to the GP_DIN */
 #define REGOFFSET_GPIO_HYSEN_SW     0x058 /* When set this bit enables the Schmitt-trigger functionality option of the IO pad. */
-#define REGOFFSET_GPIO_SLEW_SW      0x05C /* This register provides the GPIO IO pad slew controllability. Default is 1ï¿½b1. */
+#define REGOFFSET_GPIO_SLEW_SW      0x05C /* This register provides the GPIO IO pad slew controllability. Default is 1’b1. */
 #define REGOFFSET_GPIO_DRV_SEL0_SW  0x060 /* used to specify the drive strength parameter of the corresponding GPIO pad. */
 #define REGOFFSET_GPIO_DRV_SEL1_SW  0x064 /* used to specify the drive strength parameter of the corresponding GPIO pad. */
 #define REGOFFSET_GPIO_DRV_SEL2_SW  0x068 /* used to specify the drive strength parameter of the corresponding GPIO pad. */
@@ -292,12 +292,12 @@ static inline int reg_gpio_iotr_get_pin_type( int pin )
 }
 
 
-//ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½GPIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//ÉèÖÃÖ¸¶¨GPIO¿ÚÀàÐÍ
 static inline void reg_gpio_iotr_set_pin_type( int pin, GPIO_PIN_TYPE pinType )
 {
     unsigned long flags;
 	
-	//ï¿½ï¿½ï¿½ï¿½GPIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½(0~113),ï¿½ï¿½Ã´ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½GPIOï¿½ï¿½,×ªï¿½ï¿½ï¿½É¾ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ÐµÄºï¿½ï¿½ï¿½
+	//ÓÉÓÚGPIO¿ÚÊÇÁ¬ºÅÉè¼ÆµÄ(0~113),ÄÇÃ´´Ë²Ù×÷¾ÍÊÇ°ÑGPIOºÅ,×ª»¯³É¾ßÌåµÄÒ»×éÖÐµÄºÅÂë
     unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin)); /* this is not for pin number indicates AUX since that will be too big */
 
 
@@ -316,11 +316,11 @@ static inline void reg_gpio_iotr_set_pin_type( int pin, GPIO_PIN_TYPE pinType )
              /* Set input/output */
              if (pinType == GPIO_PIN_TYPE_OUTPUT)
              {
-                 REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_EN) |= nBitMask;  //ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½1
+                 REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_EN) |= nBitMask;  //ÉèÖÃÎªÊä³ö´ËÎ»ÖÃ1
 			 }
 			 else
 			 {
-                 REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_EN) &= ~nBitMask; //ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½0
+                 REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_EN) &= ~nBitMask; //ÉèÖÃÎªÊäÈë´ËÎ»ÖÃ0
 			 }
 
 			 break;
@@ -409,11 +409,11 @@ static inline void reg_gpio_iotr_set_pin_type( int pin, GPIO_PIN_TYPE pinType )
     HW_IRQ_RESTORE(Gpio, flags);
 }
 
-//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+//ÉèÖÃÊä³öÖµ
 static inline void reg_gpio_set_pin( int pin, int val )
 {
     unsigned long flags;
-    unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin));  //È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½Öµ
+    unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin));  //È·¶¨ÔÚ×Ô×éÖÐµÄÊýÖµ
 
     HW_IRQ_SAVE( Gpio, flags );
     if ( val == 0 )
@@ -430,7 +430,7 @@ static inline void reg_gpio_set_pin( int pin, int val )
 }
 
 
-//ï¿½ï¿½ï¿½Ä³ï¿½ï¿½GPIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+//¶Á³öÄ³¸öGPIO¿Ú×îºóÒ»´ÎÊä³öµÄÖµ
 static inline int reg_gpio_get_pin_output( int pin )
 {
     unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin));
@@ -440,7 +440,7 @@ static inline int reg_gpio_get_pin_output( int pin )
 
 
 
-//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+//¶Á³öÊäÈëÊä³öÖµ
 static inline int reg_gpio_get_pin( int pin )  
 {
     unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin));
@@ -457,7 +457,7 @@ static inline int reg_gpio_is_interrupt_enable( int pin )
 }
 
 
-//Ê¹ï¿½ï¿½ï¿½Ð¶ï¿½
+//Ê¹ÄÜÖÐ¶Ï
 static inline void reg_gpio_enable_interrupt( int pin )
 {
     unsigned long flags;
@@ -468,7 +468,7 @@ static inline void reg_gpio_enable_interrupt( int pin )
     HW_IRQ_RESTORE( Gpio, flags );
 }
 
-//ï¿½ï¿½Ö¹ï¿½Ð¶ï¿½
+//½ûÖ¹ÖÐ¶Ï
 static inline void reg_gpio_disable_interrupt( int pin )
 {
     unsigned long flags;
@@ -502,8 +502,8 @@ static inline int reg_gpio_itr_get_interrupt_type( int pin )
 
 
 #if 1
-//ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½Ê½:ï¿½ï¿½ï¿½ï¿½ï¿½Ø»ï¿½ï¿½ï¿½ï¿½Â½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Ë«ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµÍµï¿½Æ½ï¿½ï¿½ï¿½ï¿½
-//ï¿½Ëºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½reg_gpio_itr_set_interrupt_type_level()ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
+//ÉèÖÃÑØ´¥·¢·½Ê½:ÉÏÉýÑØ»òÕßÏÂ½µÑØ,»òÕßË«ÑØ´¥·¢£¬¸ßµÍµçÆ½´¥·¢
+//´Ëº¯ÊýÐèÅäºÏreg_gpio_itr_set_interrupt_type_level()º¯ÊýÊ¹ÓÃ
 static inline void reg_gpio_itr_set_interrupt_type( int pin, GPIO_INTERRUPT_TYPE interruptType )
 {
    unsigned long flags;
@@ -511,21 +511,21 @@ static inline void reg_gpio_itr_set_interrupt_type( int pin, GPIO_INTERRUPT_TYPE
 
    HW_IRQ_SAVE( Gpio, flags );
 	
-   			//ï¿½ï¿½ï¿½ß´ï¿½ï¿½ï¿½
+   			//µ¥±ß´¥·¢
 		   if(interruptType!=GPIO_BOTH_EDGE_INTERRUPT_TRIGGER)
 		   {
-				   REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_INT_DE) &= ~nBitMask;   //Ñ¡ï¿½ï¿½Ê¹ï¿½Ãµï¿½ï¿½ß´ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
+				   REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_INT_DE) &= ~nBitMask;   //Ñ¡ÔñÊ¹ÓÃµ¥±ß´¥·¢·½Ê½
 				   
 				   if((interruptType==GPIO_LOW_LEVEL_INTERRUPT_TRIGGER)||(interruptType==GPIO_FALLING_EDGE_INTERRUPT_TRIGGER))
 				   	{
-				   			REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_INT_EDGE) &= ~nBitMask;  //ï¿½Â½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµÍµï¿½Æ½ï¿½ï¿½ï¿½ï¿½
+				   			REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_INT_EDGE) &= ~nBitMask;  //ÏÂ½µÑØ´¥·¢»òÕßµÍµçÆ½´¥·¢
 				   	}
 				   else if((interruptType==GPIO_HIGH_LEVEL_INTERRUPT_TRIGGER)||(interruptType==GPIO_RISING_EDGE_INTERRUPT_TRIGGER))
 				   	{
-				   			REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_INT_EDGE) |= nBitMask;   //ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¸ßµï¿½Æ½ï¿½ï¿½ï¿½ï¿½
+				   			REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_INT_EDGE) |= nBitMask;   //ÉÏÉýÑØ´¥·¢»òÕß¸ßµçÆ½´¥·¢
 				   	}
 		   	}			   
-			else if(interruptType==GPIO_BOTH_EDGE_INTERRUPT_TRIGGER)	//Ë«ï¿½ß´ï¿½ï¿½ï¿½
+			else if(interruptType==GPIO_BOTH_EDGE_INTERRUPT_TRIGGER)	//Ë«±ß´¥·¢
 			{
 				REG_GPIO_FROM_PIN (pin, REGOFFSET_GPIO_INT_DE) |= nBitMask;
 			}
@@ -554,7 +554,7 @@ static inline void reg_gpio_itr_set_interrupt_type( int pin, GPIO_INTERRUPT_TYPE
 
 
 
-//added by lee  ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½edgeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½levelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
+//added by lee  ÉèÖÃÖÐ¶ÏÀàÐÍ£¬ÊÇedge´¥·¢·½Ê½»¹ÊÇlevel´¥·¢·½Ê½
 static inline void reg_gpio_itr_set_interrupt_type_level( int pin, GPIO_INTERRUPT_TYPE interruptType )
 {
    unsigned long flags;
@@ -570,7 +570,7 @@ static inline void reg_gpio_itr_set_interrupt_type_level( int pin, GPIO_INTERRUP
 
 
 
-//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼Ä´ï¿½ï¿½ï¿½
+//µç×èÉÏÀ­ÏÂÀ­ÉèÖÃ¼Ä´æÆ÷
 static inline void reg_gpio_set_pull_up_down( int pin, int val )
 {
     unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin));
@@ -602,7 +602,7 @@ static inline void reg_gpio_set_pull_up_down( int pin, int val )
     }
 }
 
-//ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ü¼Ä´ï¿½ï¿½ï¿½
+//µç×èÊ¹ÄÜ¼Ä´æÆ÷
 static inline void reg_gpio_set_pull_up_down_enable( int pin )
 {
     unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin));
@@ -624,7 +624,7 @@ static inline void reg_gpio_set_pull_up_down_enable( int pin )
     }
 }
 
-//ï¿½ï¿½ï¿½ï¿½disableï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//µç×èdisable²Ù×÷º¯Êý
 static inline void reg_gpio_set_pull_up_down_disable( int pin )
 {
     unsigned int  nBitMask = (1 << HW_GPIO_PIN_TO_BIT_OFFSET(pin));
